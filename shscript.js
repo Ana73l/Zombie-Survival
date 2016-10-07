@@ -317,7 +317,7 @@ class HealthBar {
     ctx.fillText(this.player.name,this.x,this.y+25);
     ctx.fillStyle = "#FF0000";
     ctx.fillRect(this.x+140,this.y,150,30);
-    ctx.fillStyle = "green";
+    ctx.fillStyle = "#00ff00";
     ctx.fillRect(this.x+140,this.y,(this.player.health * 2 / 10 * 150),30);
   }
   changeState() {
