@@ -10,6 +10,8 @@ var bossHealth = 0;
 var menuText1 = "1 - Single player, 2 - Two-player";
 var menuText2 = "Player 1 controls: A, W, D, Spacebar";
 var menuText3 = "Player 2 controls: Arrow keys, p";
+var player1Name = "Player1";
+var player2Name = "Player2";
 
 var startGame = () => {
   canvas = document.getElementById("gameCanvas");
@@ -77,11 +79,16 @@ var newGame = () => {
   }
   var a = player1.exists;
   var b = player2.exists;
+  var c = health2.exists;
   if(a)
     new Component(player1.x, player1.y, "#FF0000", player1.width,player1.height, player1.type, player1.elType);
   if(b)
     new Component(player2.x, player2.y, "#cc0099", player2.width, player2.height, player2.type, player2.elType);
   new Component(0,0, "#000000", 1024, 50, "color", "head");
+  new HealthBar(health1.x, health1.y, health1.player);
+  if(c)
+    new HealthBar(health2.x,health2.y,health2.player);
+  new ScoreBoard();
   for(var i = 0; i < components.length; i++) {
     components[i].changeState();
     components[i].update();
@@ -90,13 +97,25 @@ var newGame = () => {
     components[components.length-1].exists = false;
     components[components.length-2].exists = false;
     components[components.length-3].exists = false;
+    components[components.length-4].exists = false;
+    components[components.length-5].exists = false;
+    if(c)
+      components[components.length-6].exists = false;
   }
   else if(a || b) {
     components[components.length-1].exists = false;
     components[components.length-2].exists = false;
+    components[components.length-3].exists = false;
+    components[components.length-4].exists = false;
+    if(c)
+      components[components.length-5].exists = false;
   }
   else {
     components[components.length-1].exists = false;
+    components[components.length-2].exists = false;
+    components[components.length-3].exists = false;
+    if(c)
+      components[components.length-4].exists = false;
     command = "end";
   }
   for(var i = 0; i < components.length; i++) {
@@ -108,6 +127,7 @@ var newGame = () => {
 var endGame = () => {
   clear();
   components.splice(0,components.length-1);
+  gameScore.reset();
   player1.exists = true;
   player1.y = 0;
   player1.health = 5;
@@ -133,11 +153,17 @@ var endGame = () => {
   plat2.exists = true;
   plat3.x = 740;
   plat3.exists = true;
+  health1.exists = true;
+  player2.exists = true;
+  gameScore.exists = true;
+  components.push(gameScore);
   components.push(player1);
   components.push(player2);
   components.push(plat1);
   components.push(plat2);
   components.push(plat3);
+  components.push(health1);
+  components.push(health2);
   var bgMenu = new Menu("menu.png");
   bgMenu.update();
 
@@ -146,7 +172,7 @@ var endGame = () => {
 }
 
 class Component {
-  constructor(x, y, color, width, height, type, elType) {
+  constructor(x, y, color, width, height, type, elType,name) {
     this.x = x;
     this.y = y;
     this.height = height;
@@ -167,6 +193,7 @@ class Component {
     this.dirFacing = 1;
     this.exists = true;
     this.health = 5;
+    this.name = name;
     if(this.elType == "player" || this.elType == "zombie") {
       this.gravity = 0.0005;
     }
@@ -275,6 +302,48 @@ class Menu {
   }
 }
 
+class HealthBar {
+  constructor(x,y,player) {
+    this.x = x;
+    this.y = y;
+    this.player = player;
+    this.currHealth = player.health;
+    this.exists = true;
+    components.push(this);
+  }
+  update() {
+    ctx.font = "30px Consolas";
+    ctx.fillStyle = "#FFFFFF";
+    ctx.fillText(this.player.name,this.x,this.y+25);
+    ctx.fillStyle = "#FF0000";
+    ctx.fillRect(this.x+140,this.y,150,30);
+    ctx.fillStyle = "green";
+    ctx.fillRect(this.x+140,this.y,(this.player.health * 2 / 10 * 150),30);
+  }
+  changeState() {
+    this.currHealth = this.player.health;
+  }
+}
+
+class ScoreBoard {
+  constructor() {
+    this.text = "| Score : 0 |";
+    components.push(this);
+    this.exists = true;
+  }
+  update() {
+    ctx.font = "30px Consolas";
+    ctx.fillStyle = "#FFFFFF";
+    ctx.fillText(this.text,400,30);
+  }
+  changeState() {
+    this.text = "| Score: " + score + " |";
+  }
+  reset() {
+    this.text = "| Score : 0 |";
+  }
+}
+
 var projectileHit = (projectile, zombie) => {
   if((projectile.x <= zombie.x + zombie.width && projectile.x + projectile.width >= zombie.x) &&
     ((((projectile.y >= zombie.y) && (projectile.y + projectile.height <= zombie.y + zombie.height))) ||
@@ -366,8 +435,11 @@ var topBlock = new Component(0,0, "#000000", 1024, 50, "color", "head");
 var plat1 = new Component(0,300,"rampTexture.jpg", 500, 30, "img", "plat");
 var plat2 = new Component(500 , 600, "rampTexture.jpg", 600,30,"img", "plat");
 var plat3 = new Component(740, 450, "rampTexture.jpg", 400, 30, "img", "plat");
-var player1 = new Component(100,0, "#FF0000", 50, 75, "color", "player");
-var player2 = new Component(924,0, "#cc0099", 50, 75, "color", "player");
+var player1 = new Component(100,0, "#FF0000", 50, 75, "color", "player", "Player1");
+var player2 = new Component(924,0, "#cc0099", 50, 75, "color", "player", "Player2");
+var health1 = new HealthBar(20,7,player1);
+var health2 = new HealthBar(710,7,player2);
+var gameScore = new ScoreBoard();
 
 var generatePlatform = () => {
   new Component(cw,Math.floor(Math.random()*(700+1)+120), "rampTexture.jpg", Math.random()*(300+1)+100, 30, "img", "plat");
@@ -421,6 +493,7 @@ var keyControls = (e) => {
   }
   if(e.keyCode == 49 && command == "end") {
     player2.exists = false;
+    health2.exists = false;
     command = "start";
   }
   if(e.keyCode == 50 && command == "end") {
